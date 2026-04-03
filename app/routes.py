@@ -23,6 +23,16 @@ from werkzeug.utils import secure_filename
 from .rag_pipeline import get_rag_pipeline
 from .kb_manager import get_kb_manager
 from .placement_ai_fix import PlacementAIFix
+from .ml_engine import (
+    extract_skills,
+    classify_experience,
+    predict_roles,
+    generate_questions,
+    evaluate_answer,
+    generate_roadmap,
+    calculate_ats_score,
+    get_interview_tips
+)
 from .db import (
     create_user,
     create_mock_test,
@@ -1475,94 +1485,93 @@ def extract_text_from_file(file_path, filename):
     raise RuntimeError(f"Unsupported file extension: {ext}")
 
 
-def analyze_resume_with_ai(resume_text, api_key):
-    """Analyze resume using OpenAI/Gemini with fallback. Returns structured suggestions."""
+def analyze_resume_with_ai(resume_text, api_key=None):
+    """Analyze resume using ML engine - NO external APIs needed."""
     logger = logging.getLogger(__name__)
     
-    prompt = """Analyze this resume for ATS optimization. Give SHORT, CONCISE feedback.
-
-Return ONLY valid JSON (no markdown) with:
-1. "ats_score": 0-100 ATS compatibility score
-2. "suggestions": Array (max 8 items), each with:
-   - "id": e.g., "sug-1"
-   - "category": "formatting" | "content" | "keywords" | "structure" | "grammar"
-   - "severity": "critical" | "important" | "minor"
-   - "title": 3-6 words max
-   - "description": 1-2 sentences max, be direct
-   - "original_text": EXACT text from resume needing change (null if general advice)
-   - "suggested_text": Fixed version (null if general advice)
-   - "section": "Experience" | "Skills" | "Education" | "Summary" | "Contact" | "Projects"
-   - "line_hint": approximate line number or position hint (e.g., "near top", "middle", "line 15")
-3. "strengths": 3-5 brief points (5-10 words each)
-4. "missing_sections": Array of missing recommended sections
-
-IMPORTANT: Keep all text brief and actionable. No fluff.
-
-Resume content:
-""" + resume_text
-
-    system_prompt = "You are a concise ATS resume expert. Give brief, direct feedback. No lengthy explanations. Return ONLY valid JSON."
+    logger.info("🚀 Starting ML-based resume analysis (no APIs)")
     
-    logger.info("🚀 Starting resume analysis via PlacementAIFix")
-    
-    # Try with PlacementAIFix (OpenAI with Gemini fallback)
     try:
-        logger.info("📍 Attempting resume analysis with OpenAI")
-        response_text = PlacementAIFix.get_ai_response(prompt, system_prompt, prefer_openai=True)
+        # Extract skills from resume
+        logger.info("📍 Extracting skills from resume")
+        skills_result = extract_skills(resume_text)
+        matched_skills = skills_result.get("matched_skills", [])
         
-        if response_text:
-            logger.info("✅ Received response from LLM")
-            # Extract JSON from response
-            analysis = PlacementAIFix.extract_json_from_text(response_text)
-            
-            if analysis and PlacementAIFix.validate_json_structure(analysis, ["ats_score", "suggestions"]):
-                logger.info(f"✅ Valid analysis returned with ATS score: {analysis.get('ats_score')}")
-                return analysis
-            else:
-                logger.warning("⚠️ Invalid JSON structure from LLM, using fallback")
-        else:
-            logger.warning("⚠️ No response from LLM, using fallback")
-    except Exception as e:
-        logger.error(f"❌ Analysis failed: {e}, using fallback")
-    
-    # Fallback: Return basic analysis
-    logger.info("🔄 Using fallback resume analysis")
-    return {
-        "ats_score": 65,
-        "suggestions": [
-            {
-                "id": "sug-1",
+        # Classify experience level
+        logger.info("📍 Classifying experience level")
+        exp_result = classify_experience(matched_skills)
+        experience_level = exp_result.get("level")
+        
+        # Predict roles
+        logger.info("📍 Predicting suitable roles")
+        roles_result = predict_roles(matched_skills)
+        predicted_roles = roles_result.get("predicted_roles", [])
+        
+        # Calculate ATS score
+        logger.info("📍 Calculating ATS score")
+        ats_score = calculate_ats_score(matched_skills, experience_level)
+        
+        # Get interview tips
+        tips = get_interview_tips(experience_level)
+        
+        logger.info(f"✅ ML resume analysis complete: {ats_score}/100, {experience_level}")
+        
+        # Format response to match expected structure
+        suggestions = []
+        if not matched_skills:
+            suggestions.append({
+                "category": "keywords",
+                "severity": "critical",
+                "title": "Add technical skills to resume",
+                "description": "Include programming languages, frameworks, and tools",
+                "section": "Skills"
+            })
+        
+        if predicted_roles and predicted_roles[0].get("missing_required"):
+            missing = predicted_roles[0]["missing_required"][:2]
+            suggestions.append({
                 "category": "keywords",
                 "severity": "important",
-                "title": "Add quantifiable achievements",
-                "description": "Use numbers like '30% improvement' instead of vague descriptions.",
-                "original_text": None,
-                "suggested_text": None,
-                "section": "Experience",
-                "line_hint": "Experience section"
-            },
-            {
-                "id": "sug-2",
-                "category": "formatting",
+                "title": f"Add {missing[0].upper()} to skills",
+                "description": f"{missing[0]} is required for {predicted_roles[0]['name']}",
+                "section": "Skills"
+            })
+        
+        return {
+            "ats_score": ats_score,
+            "suggestions": suggestions if suggestions else [{
+                "category": "general",
                 "severity": "minor",
-                "title": "Improve bullet point consistency",
-                "description": "Ensure all bullet points follow the same format and length.",
-                "original_text": None,
-                "suggested_text": None,
-                "section": "Experience",
-                "line_hint": "Throughout document"
+                "title": "Great resume! Keep learning",
+                "description": "Continue building skills and gaining experience",
+                "section": "General"
+            }],
+            "strengths": [
+                f"✅ {len(matched_skills)} relevant skills found",
+                f"✅ Suitable for {len(predicted_roles)} roles",
+                f"✅ Experience level: {experience_level.upper()}"
+            ],
+            "missing_sections": [
+                "GitHub profile link",
+                "Quantified metrics",
+                "Certifications"
+            ],
+            "metadata": {
+                "skills_count": len(matched_skills),
+                "experience_level": experience_level,
+                "ml_powered": True,
+                "tips": tips
             }
-        ],
-        "strengths": [
-            "Clear work experience progression",
-            "Good technical skill organization",
-            "Project descriptions are relevant"
-        ],
-        "missing_sections": [
-            "Certifications or awards",
-            "Professional summary"
-        ]
-    }
+        }
+    except Exception as e:
+        logger.error(f"❌ ML analysis failed: {e}")
+        return {
+            "ats_score": 50,
+            "suggestions": [{"title": "Review resume format", "category": "formatting"}],
+            "strengths": ["Resume submitted"],
+            "missing_sections": ["Most sections"],
+            "metadata": {"ml_powered": False, "error": str(e)}
+        }
 
 
 @main.route("/resume")
