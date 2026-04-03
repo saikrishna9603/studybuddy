@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Roadmap - PrepPulse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/placement.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="dash-navbar">
+        <div class="dash-nav-container">
+            <div class="dash-nav-left">
+                <span class="dash-nav-logo">PrepPulse</span>
+            </div>
+            <div class="dash-nav-links">
+                <a href="{{ url_for('main.dashboard') }}" class="dash-nav-link">Dashboard</a>
+                <a href="{{ url_for('main.placement_assistant') }}" class="dash-nav-link active">Interview Prep</a>
+                <a href="{{ url_for('main.logout') }}" class="dash-nav-logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="auth-shell">
+        <div style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <div>
+                    <h2 style="margin: 0 0 8px 0; color: #ffffff; font-size: 1.5rem;">
+                        🗺️ Your 21-Day Interview Roadmap
+                    </h2>
+                    <p style="margin: 8px 0; color: rgba(255,255,255,0.6); font-size: 0.95rem;">
+                        Personalized preparation plan based on your performance and skill gaps
+                    </p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button id="download-btn" class="btn-ghost" style="padding: 10px 16px; font-size: 0.9rem;">
+                        📥 Download
+                    </button>
+                    <button id="regenerate-btn" class="btn-submit" style="padding: 10px 16px; font-size: 0.9rem;">
+                        🔄 Regenerate
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                margin-bottom: 40px;
+            ">
+                <!-- Total Days -->
+                <div style="
+                    background: rgba(255,107,53,0.05);
+                    border: 1px solid rgba(255,107,53,0.15);
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: center;
+                ">
+                    <div style="
+                        font-size: 0.8rem;
+                        color: rgba(255,255,255,0.6);
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 8px;
+                    ">Duration</div>
+                    <div style="
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: #FF6B35;
+                    ">21</div>
+                    <div style="
+                        font-size: 0.85rem;
+                        color: rgba(255,255,255,0.5);
+                        margin-top: 4px;
+                    ">Days</div>
+                </div>
+
+                <!-- Completed Days -->
+                <div style="
+                    background: rgba(76,175,80,0.05);
+                    border: 1px solid rgba(76,175,80,0.15);
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: center;
+                ">
+                    <div style="
+                        font-size: 0.8rem;
+                        color: rgba(255,255,255,0.6);
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 8px;
+                    ">Completed</div>
+                    <div style="
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: #4CAF50;
+                    " id="completed-count">0</div>
+                    <div style="
+                        font-size: 0.85rem;
+                        color: rgba(255,255,255,0.5);
+                        margin-top: 4px;
+                    ">Days</div>
+                </div>
+
+                <!-- Remaining Days -->
+                <div style="
+                    background: rgba(255,215,0,0.05);
+                    border: 1px solid rgba(255,215,0,0.15);
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: center;
+                ">
+                    <div style="
+                        font-size: 0.8rem;
+                        color: rgba(255,255,255,0.6);
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                        margin-bottom: 8px;
+                    ">Remaining</div>
+                    <div style="
+                        font-size: 2rem;
+                        font-weight: 700;
+                        color: #FFD700;
+                    " id="remaining-count">21</div>
+                    <div style="
+                        font-size: 0.85rem;
+                        color: rgba(255,255,255,0.5);
+                        margin-top: 4px;
+                    ">Days</div>
+                </div>
+            </div>
+
+            <!-- Overall Progress Bar -->
+            <div style="margin-bottom: 40px;">
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+                ">
+                    <span style="
+                        font-size: 0.9rem;
+                        color: rgba(255,255,255,0.7);
+                        font-weight: 500;
+                    ">Overall Progress</span>
+                    <span style="
+                        font-size: 0.85rem;
+                        color: rgba(255,255,255,0.5);
+                    " id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar" style="height: 8px;">
+                    <div class="progress-fill" id="progress-bar" style="width: 0%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Timeline of Tasks -->
+            <div class="roadmap-timeline" id="timeline-container">
+                <!-- Timeline items will be inserted here by JavaScript -->
+            </div>
+
+            <!-- Resources Section -->
+            <div style="
+                background: rgba(255,255,255,0.02);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px;
+                padding: 30px;
+                margin-top: 40px;
+                margin-bottom: 40px;
+            ">
+                <h3 style="
+                    color: #FF6B35;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 20px;
+                ">📚 Recommended Resources</h3>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <!-- LeetCode -->
+                    <a href="https://leetcode.com" target="_blank" style="
+                        display: block;
+                        padding: 16px;
+                        background: rgba(255,107,53,0.05);
+                        border: 1px solid rgba(255,107,53,0.15);
+                        border-radius: 8px;
+                        text-decoration: none;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    " onmouseover="this.style.background='rgba(255,107,53,0.1)'" onmouseout="this.style.background='rgba(255,107,53,0.05)'">
+                        <div style="color: #FF6B35; font-weight: 600; margin-bottom: 4px;">💻 LeetCode</div>
+                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Practice coding problems by difficulty and category</div>
+                    </a>
+
+                    <!-- GeeksforGeeks -->
+                    <a href="https://www.geeksforgeeks.org" target="_blank" style="
+                        display: block;
+                        padding: 16px;
+                        background: rgba(255,107,53,0.05);
+                        border: 1px solid rgba(255,107,53,0.15);
+                        border-radius: 8px;
+                        text-decoration: none;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    " onmouseover="this.style.background='rgba(255,107,53,0.1)'" onmouseout="this.style.background='rgba(255,107,53,0.05)'">
+                        <div style="color: #FF6B35; font-weight: 600; margin-bottom: 4px;">📖 GeeksforGeeks</div>
+                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Comprehensive tutorials and algorithms reference</div>
+                    </a>
+
+                    <!-- System Design -->
+                    <a href="https://www.youtube.com/results?search_query=system+design+interview" target="_blank" style="
+                        display: block;
+                        padding: 16px;
+                        background: rgba(255,107,53,0.05);
+                        border: 1px solid rgba(255,107,53,0.15);
+                        border-radius: 8px;
+                        text-decoration: none;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    " onmouseover="this.style.background='rgba(255,107,53,0.1)'" onmouseout="this.style.background='rgba(255,107,53,0.05)'">
+                        <div style="color: #FF6B35; font-weight: 600; margin-bottom: 4px;">🎬 YouTube</div>
+                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">Video tutorials on Data Structures and Algorithms</div>
+                    </a>
+
+                    <!-- Interview Resources -->
+                    <a href="https://github.com/donnemartin/system-design-primer" target="_blank" style="
+                        display: block;
+                        padding: 16px;
+                        background: rgba(255,107,53,0.05);
+                        border: 1px solid rgba(255,107,53,0.15);
+                        border-radius: 8px;
+                        text-decoration: none;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    " onmouseover="this.style.background='rgba(255,107,53,0.1)'" onmouseout="this.style.background='rgba(255,107,53,0.05)'">
+                        <div style="color: #FF6B35; font-weight: 600; margin-bottom: 4px;">🔗 System Design Primer</div>
+                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">GitHub resource on system design interview prep</div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 40px;">
+                <button id="practice-again-btn" class="btn-submit" style="padding: 16px 24px; font-size: 1rem; width: 100%;">
+                    🎯 Practice Again
+                </button>
+                <a href="{{ url_for('main.placement_assistant') }}" class="btn-submit" style="
+                    padding: 16px 24px;
+                    font-size: 1rem;
+                    width: 100%;
+                    background: transparent;
+                    color: #FF6B35;
+                    border: 2px solid rgba(255,107,53,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    text-decoration: none;
+                ">
+                    ← Back to Interview Prep
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = null;
+        let roadmapData = null;
+
+        // Get session ID from URL params
+        function getSessionId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('session_id');
+        }
+
+        // Load roadmap data
+        async function loadRoadmap() {
+            sessionId = getSessionId();
+            if (!sessionId) {
+                alert('No session ID provided. Redirecting...');
+                window.location.href = '{{ url_for("main.placement_assistant") }}';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/placement/roadmap/${sessionId}`);
+                if (response.ok) {
+                    roadmapData = await response.json();
+                    displayRoadmap(roadmapData);
+                } else {
+                    // Try to generate if not found
+                    generateRoadmap();
+                }
+            } catch (error) {
+                console.error('Error loading roadmap:', error);
+                alert('Error loading roadmap. Please try again.');
+            }
+        }
+
+        // Display roadmap timeline
+        function displayRoadmap(data) {
+            const days = data.days || generateDefaultRoadmap();
+            const timeline = document.getElementById('timeline-container');
+            timeline.innerHTML = '';
+
+            let completedDays = 0;
+
+            days.forEach((day, index) => {
+                const dayNum = index + 1;
+                const isCompleted = day.completed || false;
+                if (isCompleted) completedDays++;
+
+                const dayElement = document.createElement('div');
+                dayElement.className = 'roadmap-day';
+                dayElement.innerHTML = `
+                    <div class="day-number" style="${isCompleted ? 'background: #4CAF50;' : 'background: #FF6B35;'}">${dayNum}</div>
+                    <div class="day-content">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
+                            <div style="flex: 1;">
+                                <div class="day-title">${day.title || `Day ${dayNum} Tasks`}</div>
+                                <div class="day-tasks">${day.description || day.tasks || 'Complete the assigned tasks'}</div>
+                                ${day.resources ? `
+                                    <div style="margin-top: 12px; font-size: 0.85rem;">
+                                        <strong style="color: #FF6B35;">Resources:</strong>
+                                        <div style="color: rgba(255,255,255,0.5); margin-top: 4px;">${day.resources}</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <input 
+                                type="checkbox"
+                                class="day-checkbox"
+                                data-day="${dayNum}"
+                                ${isCompleted ? 'checked' : ''}
+                                style="
+                                    width: 20px;
+                                    height: 20px;
+                                    cursor: pointer;
+                                    margin-top: 4px;
+                                    accent-color: #FF6B35;
+                                    flex-shrink: 0;
+                                "
+                            >
+                        </div>
+                    </div>
+                `;
+                timeline.appendChild(dayElement);
+            });
+
+            // Update progress
+            updateProgress(completedDays, days.length);
+
+            // Add checkbox listeners
+            document.querySelectorAll('.day-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', saveDayProgress);
+            });
+        }
+
+        // Generate default roadmap if not available
+        function generateDefaultRoadmap() {
+            const roadmap = [
+                { title: 'Foundation Basics', description: 'Review data structures fundamentals. Focus on arrays, linked lists, and basic searching.', resources: 'GeeksforGeeks, YouTube tutorials', completed: false },
+                { title: 'Sorting Algorithms', description: 'Master sorting algorithms. Practice quick sort, merge sort, and heap sort implementations.', resources: 'LeetCode Easy Problems', completed: false },
+                { title: 'Stack & Queue', description: 'Deep dive into stack and queue data structures. Solve 10+ related problems.', resources: 'LeetCode Problems', completed: false },
+                { title: 'Trees Part 1', description: 'Learn binary trees, BST properties, and traversal methods. Complete 5 problems.', resources: 'GeeksforGeeks Trees', completed: false },
+                { title: 'Trees Part 2', description: 'Advanced tree problems: AVL trees, Red-Black trees, tree DP problems.', resources: 'LeetCode Medium', completed: false },
+                { title: 'Graphs Intro', description: 'Understand graph representation and basic algorithms. Review DFS, BFS.', resources: 'Graph Algorithms', completed: false },
+                { title: 'Graph Algorithms', description: 'Master shortest path (Dijkstra, Bellman-Ford) and spanning trees.', resources: 'LeetCode', completed: false },
+                { title: 'Dynamic Programming 1', description: 'Learn DP fundamentals. Solve classic problems: fibonacci, knapsack, coin change.', resources: 'DP Resources', completed: false },
+                { title: 'Dynamic Programming 2', description: 'Advanced DP: matrix chain multiplication, LCS, edit distance.', resources: 'LeetCode Hard', completed: false },
+                { title: 'Strings & Hashing', description: 'String algorithms and hashing techniques. Solve pattern matching problems.', resources: 'LeetCode', completed: false },
+                { title: 'Greedy Algorithms', description: 'Master greedy approach. Understand when and why greedy works.', resources: 'Problem Sets', completed: false },
+                { title: 'Math & Numbers', description: 'Number theory, prime numbers, permutations, combinations. Complete 8 problems.', resources: 'LeetCode', completed: false },
+                { title: 'Review & Practice', description: 'Mid-point review. Take a mock test covering concepts Week 1-2.', resources: 'Mock Test', completed: false },
+                { title: 'System Design Intro', description: 'Learn basics of system design. Understand scalability concepts.', resources: 'System Design Primer', completed: false },
+                { title: 'Database Design', description: 'Database concepts, normalization, indexing. SQL and NoSQL tradeoffs.', resources: 'System Design Videos', completed: false },
+                { title: 'API Design', description: 'Design REST APIs. Understand HTTP, caching, load balancing basics.', resources: 'API Design Guide', completed: false },
+                { title: 'Behavioral Prep', description: 'Prepare STAR method answers. Practice 5 common behavioral questions.', resources: 'Interview Tips', completed: false },
+                { title: 'Mock Interview 1', description: 'Full-length mock interview. Get feedback and identify weak areas.', resources: 'Mock Interviews', completed: false },
+                { title: 'Weak Areas Review', description: 'Focus on areas from mock interview. Additional problem practice.', resources: 'Targeted Practice', completed: false },
+                { title: 'Speed Practice', description: 'Solve problems under time constraints. Build speed and confidence.', resources: 'LeetCode Contests', completed: false },
+                { title: 'Final Review', description: 'Final review of all concepts. Take second mock interview. Rest and prepare!', resources: 'Final Prep', completed: false }
+            ];
+            return roadmap;
+        }
+
+        // Update progress counts
+        function updateProgress(completed, total) {
+            const remaining = total - completed;
+            const percentage = (completed / total) * 100;
+
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('remaining-count').textContent = remaining;
+            document.getElementById('progress-percentage').textContent = `${Math.round(percentage)}%`;
+            document.getElementById('progress-bar').style.width = percentage + '%';
+        }
+
+        // Save day progress
+        async function saveDayProgress(e) {
+            const dayNum = e.target.dataset.day;
+            const isCompleted = e.target.checked;
+
+            try {
+                await fetch(`/api/placement/roadmap/${sessionId}/progress`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        day: dayNum,
+                        completed: isCompleted
+                    })
+                });
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        // Generate new roadmap
+        async function generateRoadmap() {
+            try {
+                const response = await fetch('/api/placement/roadmap/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+
+                if (response.ok) {
+                    roadmapData = await response.json();
+                    displayRoadmap(roadmapData);
+                }
+            } catch (error) {
+                console.error('Error generating roadmap:', error);
+                displayRoadmap({ days: generateDefaultRoadmap() });
+            }
+        }
+
+        // Download roadmap
+        document.getElementById('download-btn').addEventListener('click', () => {
+            const content = generateCSVContent();
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'interview_roadmap_21days.csv';
+            link.click();
+        });
+
+        // Generate CSV content
+        function generateCSVContent() {
+            let csv = 'Day,Title,Description,Resources,Completed\n';
+            const days = roadmapData?.days || generateDefaultRoadmap();
+            days.forEach((day, index) => {
+                const dayNum = index + 1;
+                csv += `${dayNum},"${day.title}","${day.description}","${day.resources}","${day.completed ? 'Yes' : 'No'}"\n`;
+            });
+            return csv;
+        }
+
+        // Regenerate button
+        document.getElementById('regenerate-btn').addEventListener('click', () => {
+            if (confirm('This will create a new roadmap. Your current progress will be saved.')) {
+                generateRoadmap();
+            }
+        });
+
+        // Practice again button
+        document.getElementById('practice-again-btn').addEventListener('click', () => {
+            window.location.href = '{{ url_for("main.placement_assistant") }}';
+        });
+
+        // Load roadmap on page load
+        document.addEventListener('DOMContentLoaded', loadRoadmap);
+    </script>
+</body>
+</html>
