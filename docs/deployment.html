@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment Guide - StudyBuddy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            margin-top: 2rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.95;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            color: #333;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            border-left: 4px solid #667eea;
+        }
+
+        .notes {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .deployment-option {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .deployment-option h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #666;
+            border-top: 1px solid #ddd;
+            margin-top: 3rem;
+        }
+
+        nav {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        nav a {
+            margin-right: 1.5rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="index.html">← Back to Home</a>
+            <a href="#railway">Railway</a>
+            <a href="#render">Render</a>
+            <a href="#heroku">Heroku</a>
+        </nav>
+
+        <header>
+            <h1>🚀 Deployment Guide</h1>
+            <p>Deploy StudyBuddy to production with these step-by-step guides</p>
+        </header>
+
+        <h2>Deployment Architecture</h2>
+        <p>StudyBuddy is a full-stack Flask application that requires:</p>
+        <ul>
+            <li><strong>Backend:</strong> Python Flask server running 24/7</li>
+            <li><strong>Database:</strong> SQLite (or PostgreSQL for production)</li>
+            <li><strong>Frontend:</strong> Served by Flask (server-side rendering)</li>
+            <li><strong>APIs:</strong> OpenAI + Google Gemini (cloud)</li>
+        </ul>
+
+        <div class="info">
+            <strong>ℹ️ Important:</strong> GitHub Pages only hosts static sites. This guide covers deploying the complete Flask backend to cloud platforms.
+        </div>
+
+        <!-- Railway -->
+        <h2 id="railway">⭐ Option 1: Railway.app (Recommended)</h2>
+        <p><strong>Cost:</strong> $5/month free credit | <strong>Setup:</strong> 5 minutes | <strong>DX:</strong> Excellent</p>
+
+        <div class="deployment-option">
+            <h3>Step 1: Create Railway Account</h3>
+            <ol>
+                <li>Visit <a href="https://railway.app" target="_blank">railway.app</a></li>
+                <li>Sign up with GitHub (one-click)</li>
+                <li>Authorize Railway to access your repos</li>
+            </ol>
+        </div>
+
+        <div class="deployment-option">
+            <h3>Step 2: Create New Project</h3>
+            <ol>
+                <li>Click "Create New Project"</li>
+                <li>Select "Deploy from GitHub"</li>
+                <li>Choose the studybuddy repository</li>
+                <li>Railway automatically detects Flask</li>
+            </ol>
+        </div>
+
+        <div class="deployment-option">
+            <h3>Step 3: Configure Environment Variables</h3>
+            <p>In Railway dashboard, go to "Variables" and add:</p>
+            <div class="code-block">
+OPEN_API_KEY = sk-proj-your-key-here
+GEMINI_API_KEY = your-gemini-key-here
+GEMINI_MODEL = gemini-1.5-flash
+SECRET_KEY = generate-strong-random-key
+FLASK_ENV = production
+            </div>
+        </div>
+
+        <div class="success">
+            <strong>✅ That's it!</strong> Railway will automatically deploy on every push to master branch. Your app goes live at: <code>https://studybuddy-[random].up.railway.app</code>
+        </div>
+
+        <!-- Render -->
+        <h2 id="render">✅ Option 2: Render.com (Best Free Tier)</h2>
+        <p><strong>Cost:</strong> Free tier available | <strong>Setup:</strong> 10 minutes | <strong>DX:</strong> Great</p>
+
+        <div class="deployment-option">
+            <h3>Step 1: Create Render Account</h3>
+            <ol>
+                <li>Visit <a href="https://render.com" target="_blank">render.com</a></li>
+                <li>Sign up with GitHub</li>
+                <li>Authorize Render to access repositories</li>
+            </ol>
+        </div>
+
+        <div class="deployment-option">
+            <h3>Step 2: Deploy New Web Service</h3>
+            <ol>
+                <li>Click "New +" → "Web Service"</li>
+                <li>Connect GitHub repository</li>
+                <li>Configure:
+                    <ul>
+                        <li><strong>Name:</strong> studybuddy</li>
+                        <li><strong>Environment:</strong> Python 3</li>
+                        <li><strong>Build Command:</strong> <code>pip install -r requirements.txt</code></li>
+                        <li><strong>Start Command:</strong> <code>gunicorn app:create_app()</code></li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <div class="deployment-option">
+            <h3>Step 3: Add Environment Variables</h3>
+            <p>In Render dashboard, add these variables:</p>
+            <div class="code-block">
+OPEN_API_KEY = sk-proj-your-key-here
+GEMINI_API_KEY = your-gemini-key-here
+GEMINI_MODEL = gemini-1.5-flash
+SECRET_KEY = generate-strong-random-key
+            </div>
+        </div>
+
+        <div class="notes">
+            <strong>⚠️ Note:</strong> Free tier enforces 15-minute inactivity timeout. Upgrade to paid ($7/month) for production use.
+        </div>
+
+        <!-- Heroku -->
+        <h2 id="heroku">🔵 Option 3: Heroku (Legacy - Not Recommended)</h2>
+        <p><strong>Cost:</strong> Paid only (free tier ended) | <strong>Setup:</strong> 15 minutes</p>
+
+        <div class="notes">
+            <strong>⚠️ Notice:</strong> Heroku free tier ended November 2022. Use Railway or Render instead for better value.
+        </div>
+
+        <div class="deployment-option">
+            <h3>If Already Using Heroku:</h3>
+            <div class="code-block">
+# Install Heroku CLI
+# Visit: https://devcenter.heroku.com/articles/heroku-cli
+
+# Login to Heroku
+heroku login
+
+# Create new app
+heroku create studybuddy-yourname
+
+# Add environment variables
+heroku config:set OPEN_API_KEY=sk-proj-xxx
+heroku config:set GEMINI_API_KEY=xxx
+heroku config:set SECRET_KEY=xxx
+
+# Deploy
+git push heroku main
+
+# Open app
+heroku open
+            </div>
+        </div>
+
+        <!-- Local Deployment -->
+        <h2>🏠 Option 4: Run Locally (Development)</h2>
+
+        <div class="deployment-option">
+            <h3>Setup Local Development</h3>
+            <div class="code-block">
+# Clone repository
+git clone https://github.com/saikrishna9603/studybuddy.git
+cd studybuddy
+
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run development server
+python run.py
+
+# Visit http://localhost:5000
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <h2>📊 Platform Comparison</h2>
+        <table>
+            <tr>
+                <th>Platform</th>
+                <th>Free Tier</th>
+                <th>Paid</th>
+                <th>Setup Time</th>
+                <th>Best For</th>
+            </tr>
+            <tr>
+                <td><strong>Railway</strong> ⭐</td>
+                <td>$5 credit/month</td>
+                <td>$0.50/GB RAM</td>
+                <td>5 min</td>
+                <td>Most users</td>
+            </tr>
+            <tr>
+                <td><strong>Render</strong></td>
+                <td>15-min timeout</td>
+                <td>$7/month</td>
+                <td>10 min</td>
+                <td>Light usage</td>
+            </tr>
+            <tr>
+                <td><strong>Heroku</strong></td>
+                <td>❌ Ended</td>
+                <td>$7+/month</td>
+                <td>15 min</td>
+                <td>Legacy apps</td>
+            </tr>
+            <tr>
+                <td><strong>AWS</strong></td>
+                <td>1 year free</td>
+                <td>Pay-as-you-go</td>
+                <td>30 min</td>
+                <td>Enterprise</td>
+            </tr>
+        </table>
+
+        <!-- Post-Deployment -->
+        <h2>✓ Post-Deployment Checklist</h2>
+        <div style="background: white; padding: 1.5rem; border-radius: 8px; margin: 1rem 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <ul>
+                <li>✅ Database created and initialized</li>
+                <li>✅ API keys configured correctly</li>
+                <li>✅ Test login functionality</li>
+                <li>✅ Test AI chatbot (try both OpenAI and Gemini)</li>
+                <li>✅ Test interview practice workflow</li>
+                <li>✅ Monitor logs for errors</li>
+                <li>✅ Set up error monitoring (Sentry recommended)</li>
+                <li>✅ Configure custom domain (optional)</li>
+                <li>✅ Enable HTTPS/SSL</li>
+                <li>✅ Set up database backups</li>
+            </ul>
+        </div>
+
+        <!-- Monitoring -->
+        <h2>📈 Monitoring & Support</h2>
+        <div class="info">
+            <strong>ℹ️ Monitoring Tools:</strong>
+            <ul>
+                <li><strong>Sentry:</strong> Error tracking and debugging</li>
+                <li><strong>New Relic:</strong> Performance monitoring</li>
+                <li><strong>LogRocket:</strong> Frontend performance</li>
+            </ul>
+        </div>
+
+        <!-- Troubleshooting -->
+        <h2>🔧 Troubleshooting Deployment</h2>
+
+        <h3>App crashes after deployment</h3>
+        <p>Check the logs in your platform's dashboard. Common issues:</p>
+        <ul>
+            <li>Missing environment variables → Add all keys from .env.example</li>
+            <li>Database not initialized → Let the app initialize on first run</li>
+            <li>Dependency version conflict → Check Python version compatibility</li>
+        </ul>
+
+        <h3>Slow API responses</h3>
+        <ul>
+            <li>OpenAI taking longer → Normal, use Gemini fallback</li>
+            <li>Cold start delays → Upgrade to paid tier to reduce cold starts</li>
+            <li>Database queries slow → Add indexes, consider PostgreSQL</li>
+        </ul>
+
+        <h3>Getting "502 Bad Gateway"</h3>
+        <ul>
+            <li>App crashed → Check error logs</li>
+            <li>Out of memory → Upgrade instance size</li>
+            <li>Port not listening → Ensure Flask binds to correct port</li>
+        </ul>
+
+        <!-- Next Steps -->
+        <h2>🎯 Next Steps</h2>
+        <div class="success">
+            <h3>After Deployment:</h3>
+            <ol>
+                <li>Share your live URL with others</li>
+                <li>Test all features thoroughly</li>
+                <li>Configure custom domain</li>
+                <li>Set up monitoring and alerts</li>
+                <li>Plan for scaling (database, caching)</li>
+            </ol>
+        </div>
+
+        <footer>
+            <p><a href="index.html">← Back to Home</a> | <a href="https://github.com/saikrishna9603/studybuddy" target="_blank">GitHub Repository</a></p>
+            <p>Need help? Open an issue on GitHub or check the documentation.</p>
+        </footer>
+    </div>
+</body>
+</html>
