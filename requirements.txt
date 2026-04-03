@@ -8,3 +8,4 @@ youtube-transcript-api
 openai
 langchain
 google-generativeai
+gunicorn
