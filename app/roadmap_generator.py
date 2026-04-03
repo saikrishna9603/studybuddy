@@ -3,31 +3,24 @@ Roadmap Generator Module
 
 Generates personalized interview preparation roadmaps based on user's skills,
 weak areas, and target company requirements.
+
+FIXED: Added comprehensive logging and error handling
 """
 
 import json
 import logging
 import os
-from openai import OpenAI
-import google.generativeai as genai
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
-# Initialize LLM clients - handle missing keys gracefully
+# Import the placement AI fix module
 try:
-    openai_client = OpenAI(api_key=os.environ.get('OPEN_API_KEY'))
-except Exception as e:
-    logger.warning(f"OpenAI client initialization warning: {e}")
-    openai_client = None
-
-# Configure Gemini
-try:
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-    if GEMINI_API_KEY:
-        genai.configure(api_key=GEMINI_API_KEY)
-except Exception as e:
-    logger.warning(f"Gemini configuration warning: {e}")
+    from .placement_ai_fix import PlacementAIFix
+    logger.info("✅ Imported PlacementAIFix for roadmap generation")
+except ImportError:
+    logger.error("❌ Failed to import PlacementAIFix")
+    PlacementAIFix = None
 
 
 

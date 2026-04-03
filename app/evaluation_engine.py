@@ -3,31 +3,24 @@ Evaluation Engine Module
 
 AI-powered evaluation system that scores interview answers and provides
 detailed feedback on correctness, clarity, depth, and communication.
+
+FIXED: Added comprehensive logging and error handling
 """
 
 import json
 import logging
 import os
 import re
-from openai import OpenAI
-import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
-# Initialize LLM clients - handle missing keys gracefully
+# Import the placement AI fix module for proper LLM handling
 try:
-    openai_client = OpenAI(api_key=os.environ.get('OPEN_API_KEY'))
-except Exception as e:
-    logger.warning(f"OpenAI client initialization warning: {e}")
-    openai_client = None
-
-# Configure Gemini
-try:
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-    if GEMINI_API_KEY:
-        genai.configure(api_key=GEMINI_API_KEY)
-except Exception as e:
-    logger.warning(f"Gemini configuration warning: {e}")
+    from .placement_ai_fix import PlacementAIFix
+    logger.info("✅ Imported PlacementAIFix module for evaluation")
+except ImportError:
+    logger.error("❌ Failed to import PlacementAIFix")
+    PlacementAIFix = None
 
 
 
@@ -52,124 +45,147 @@ class EvaluationEngine:
         Returns:
             dict: Evaluation results with scores, feedback, and tips
         """
+        logger.info(f"🚀 Starting answer evaluation for {question_type} question")
+        logger.debug(f"Question: {question[:100]}...")
+        logger.debug(f"Answer length: {len(user_answer) if user_answer else 0} chars")
+        
         if not user_answer or not user_answer.strip():
+            logger.warning("⚠️ Empty answer provided, returning empty evaluation")
             return self._get_empty_evaluation("Answer cannot be empty")
         
         try:
             # Try OpenAI first
+            logger.info("📍 Attempting evaluation with OpenAI")
             evaluation = self._evaluate_with_openai(
                 question, user_answer, question_type, expected_keywords
             )
+            if evaluation and 'scores' in evaluation:
+                logger.info("✅ Successfully evaluated with OpenAI")
+                return evaluation
+            else:
+                logger.warning("⚠️ OpenAI returned invalid evaluation, trying Gemini")
         except Exception as e:
-            logger.warning(f"OpenAI evaluation failed: {e}, trying Gemini")
-            try:
-                # Fallback to Gemini
-                evaluation = self._evaluate_with_gemini(
-                    question, user_answer, question_type, expected_keywords
-                )
-            except Exception as e2:
-                logger.error(f"Both LLM evaluations failed: {e2}, using fallback")
-                evaluation = self._get_fallback_evaluation(user_answer)
+            logger.warning(f"❌ OpenAI evaluation failed: {e}, trying Gemini fallback")
+            
+        try:
+            # Fallback to Gemini
+            logger.info("📍 Attempting evaluation with Gemini (fallback)")
+            evaluation = self._evaluate_with_gemini(
+                question, user_answer, question_type, expected_keywords
+            )
+            if evaluation and 'scores' in evaluation:
+                logger.info("✅ Successfully evaluated with Gemini (fallback)")
+                return evaluation
+            else:
+                logger.warning("⚠️ Gemini also returned invalid evaluation, using fallback")
+        except Exception as e2:
+            logger.error(f"❌ Gemini evaluation also failed: {e2}, using fallback")
         
-        return evaluation
+        logger.warning("⚠️ Using fallback evaluation")
+        return self._get_fallback_evaluation(user_answer)
     
     def _evaluate_with_openai(self, question, user_answer, question_type, expected_keywords):
-        """Evaluate answer using OpenAI."""
+        """Evacuate answer using OpenAI with proper error handling."""
+        logger.info(f"🔵 Calling OpenAI for {question_type} answer evaluation")
+        
         keywords_text = ""
         if expected_keywords:
-            keywords_text = f"\n\nExpected keywords/concepts: {', '.join(expected_keywords)}"
+            keywords_text = f"\n\nExpected keywords/concepts: {', '.join(str(k) for k in expected_keywords)}"
         
-        prompt = f"""Evaluate this interview answer thoroughly and provide scores and feedback.
+        prompt = f"""Evaluate this interview answer and respond with ONLY valid JSON (no markdown).
 
 QUESTION: {question}
-
-QUESTION TYPE: {question_type}
+TYPE: {question_type}
 {keywords_text}
 
-CANDIDATE'S ANSWER:
+ANSWER:
 {user_answer}
 
-Evaluate on these 4 dimensions (rate 0-10 for each):
-1. Correctness: Is the answer technically accurate?
-2. Clarity: How well is the answer explained?
-3. Depth: Does it show deep understanding and reasoning?
-4. Communication: Is it articulate and professional?
+Rate on 4 dimensions (0-10 each): correctness, clarity, depth, communication.
 
-Provide response in this exact JSON format:
+Return only this JSON:
 {{
-    "scores": {{
-        "correctness": 7,
-        "clarity": 8,
-        "depth": 6,
-        "communication": 7
-    }},
+    "scores": {{"correctness": 7, "clarity": 8, "depth": 6, "communication": 7}},
     "strengths": ["strength1", "strength2"],
     "weaknesses": ["area1", "area2"],
-    "model_answer": "An ideal answer would cover...",
+    "model_answer": "Ideal answer...",
     "tips": ["tip1", "tip2"]
-}}
-
-Be fair but critical. Focus on content quality not just form."""
+}}"""
         
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are an expert interviewer evaluating candidate responses."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.3  # Lower temp for consistent grading
+        if not PlacementAIFix:
+            logger.error("PlacementAIFix not available, using fallback")
+            return self._get_fallback_evaluation(user_answer)
+        
+        response_text = PlacementAIFix.call_openai(
+            prompt,
+            system_prompt="You are an expert technical interviewer. Respond with only valid JSON.",
+            temperature=0.3,
+            max_tokens=1000
         )
         
-        try:
-            content = response.choices[0].message.content
-            # Extract JSON from response
-            json_match = re.search(r'\{[\s\S]*\}', content)
-            if json_match:
-                evaluation = json.loads(json_match.group())
-                return self._validate_evaluation(evaluation)
-        except Exception as e:
-            logger.error(f"Failed to parse OpenAI evaluation: {e}")
+        if not response_text:
+            logger.error("OpenAI returned empty response")
+            return self._get_fallback_evaluation(user_answer)
         
+        # Extract and parse JSON
+        result = PlacementAIFix.extract_json_from_text(response_text)
+        
+        if result and isinstance(result, dict):
+            logger.info("✅ Successfully parsed OpenAI evaluation JSON")
+            return self._validate_evaluation(result)
+        
+        logger.error("Failed to parse OpenAI response as JSON")
         return self._get_fallback_evaluation(user_answer)
     
     def _evaluate_with_gemini(self, question, user_answer, question_type, expected_keywords):
-        """Evaluate answer using Google Gemini."""
+        """Evaluate answer using Google Gemini with proper error handling."""
+        logger.info(f"🔵 Calling Gemini for {question_type} answer evaluation")
+        
         keywords_text = ""
         if expected_keywords:
-            keywords_text = f"\n\nExpected keywords: {', '.join(expected_keywords)}"
+            keywords_text = f"\n\nExpected keywords: {', '.join(str(k) for k in expected_keywords)}"
         
-        prompt = f"""Evaluate this {question_type} interview answer on 4 dimensions (0-10 each):
-1. Correctness - Technical accuracy
-2. Clarity - How well explained
-3. Depth - Level of understanding shown
-4. Communication - Articulate and professional
+        prompt = f"""Evaluate this interview answer and respond with ONLY valid JSON (no markdown).
 
-Question: {question}
+QUESTION: {question}
+TYPE: {question_type}
 {keywords_text}
 
-Answer: {user_answer}
+ANSWER:
+{user_answer}
 
-Return JSON response with scores, strengths, weaknesses, model answer, and tips."""
+Rate on 4 dimensions (0-10 each): correctness, clarity, depth, communication.
+
+Return only this JSON:
+{{
+    "scores": {{"correctness": 7, "clarity": 8, "depth": 6, "communication": 7}},
+    "strengths": ["strength1", "strength2"],
+    "weaknesses": ["area1", "area2"],
+    "model_answer": "Ideal answer...",
+    "tips": ["tip1", "tip2"]
+}}"""
         
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(prompt)
+        if not PlacementAIFix:
+            logger.error("PlacementAIFix not available, using fallback")
+            return self._get_fallback_evaluation(user_answer)
         
-        try:
-            content = response.text
-            # Extract JSON
-            json_match = re.search(r'\{[\s\S]*\}', content)
-            if json_match:
-                evaluation = json.loads(json_match.group())
-                return self._validate_evaluation(evaluation)
-        except Exception as e:
-            logger.error(f"Failed to parse Gemini evaluation: {e}")
+        response_text = PlacementAIFix.call_gemini(
+            prompt,
+            system_prompt="You are an expert technical interviewer. Respond with only valid JSON."
+        )
         
+        if not response_text:
+            logger.error("Gemini returned empty response")
+            return self._get_fallback_evaluation(user_answer)
+        
+        # Extract and parse JSON
+        result = PlacementAIFix.extract_json_from_text(response_text)
+        
+        if result and isinstance(result, dict):
+            logger.info("✅ Successfully parsed Gemini evaluation JSON")
+            return self._validate_evaluation(result)
+        
+        logger.error("Failed to parse Gemini response as JSON")
         return self._get_fallback_evaluation(user_answer)
     
     def _validate_evaluation(self, evaluation):
