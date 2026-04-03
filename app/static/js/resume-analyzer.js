@@ -512,8 +512,8 @@ async function loadPdfPreview(resumeId) {
   pdfContainer.innerHTML = '<p style="color: #888; padding: 20px;">Loading PDF...</p>';
 
   try {
-    // Set worker source
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    // Set worker source (using privacy-friendly CDN)
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
     // Load PDF
     const pdfUrl = `/api/resume/file/${resumeId}`;
